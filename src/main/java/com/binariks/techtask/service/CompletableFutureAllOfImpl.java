@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 @Service
 @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class CompletableFutureAllOfImpl implements TaskService {
-
     private static final String FILE_NAME = "input.txt";
     private final Queue<String> queue = new ConcurrentLinkedQueue<>();
     private final Map<String, Integer> users = new HashMap<>();
@@ -93,5 +92,4 @@ public class CompletableFutureAllOfImpl implements TaskService {
             }
         }
     }
-
 }
