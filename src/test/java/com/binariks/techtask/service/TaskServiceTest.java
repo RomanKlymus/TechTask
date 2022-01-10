@@ -27,41 +27,38 @@ public class TaskServiceTest {
         final Set<User> users = Set.of(
                 new User("lev", 50),
                 new User("shani", 200),
-                new User("lior", 60)
+                new User("lior", 30)
         );
         Queue<String> strings = new ConcurrentLinkedQueue<>(
                 List.of(
-                        "1,lev,100\n",
-                        "2,shani,200\n",
-                        "3,lior,-10\n",
-                        "3,lev,-50\n",
+                        "1,lev,100",
+                        "2,shani,200",
+                        "3,lior,-10",
+                        "3,lev,-50",
                         "9,lior,40"));
         when(ImplArgsProvider.fileReader.readQueueFromFile(AbstractTask.FILE_NAME))
                 .thenReturn(strings);
 
         assertThat(taskService.run()).containsAll(users);
     }
-
-
 }
 
 class ImplArgsProvider implements ArgumentsProvider {
+    public static final FileReader fileReader = mock(FileReader.class);
     private final MongoDBRepo mongoDBRepo = mock(MongoDBRepo.class);
     private final MySQLRepo mySQLRepo = mock(MySQLRepo.class);
-    public static final FileReader fileReader = mock(FileReader.class);
 
     @Override
     public Stream<? extends Arguments> provideArguments(ExtensionContext extensionContext) {
-
         List<Class<?>> impls = List.of(
-//                LatchImpl.class,
-                AwaitImpl.class
-//                IsTerminatedImpl.class,
-//                InvokeAllImpl.class,
-//                ExecutorCompletionImpl.class,
-//                CompletableFutureImpl.class,
-//                CompletableFutureCombineImpl.class,
-//                CompletableFutureAllOfImpl.class
+                LatchImpl.class,
+                AwaitImpl.class,
+                IsTerminatedImpl.class,
+                InvokeAllImpl.class,
+                ExecutorCompletionImpl.class,
+                CompletableFutureImpl.class,
+                CompletableFutureCombineImpl.class,
+                CompletableFutureAllOfImpl.class
         );
         return impls.stream().map(impl -> {
             try {
@@ -71,5 +68,4 @@ class ImplArgsProvider implements ArgumentsProvider {
             }
         }).map(Arguments::of);
     }
-
 }

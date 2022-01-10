@@ -3,46 +3,28 @@ package com.binariks.techtask.service;
 import com.binariks.techtask.User;
 import com.binariks.techtask.repository.MongoDBRepo;
 import com.binariks.techtask.repository.MySQLRepo;
+import com.binariks.techtask.util.FileReader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.WebApplicationContext;
 
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service
-@Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
-public class InvokeAllImpl implements TaskService {
-
-    private static final String FILE_NAME = "input.txt";
-    private static final int THREADS_NUMBER = 2;
-    private final Queue<String> queue = new ConcurrentLinkedQueue<>();
-    private final Map<String, Integer> users = new HashMap<>();
-    private final MongoDBRepo mongoDBRepo;
-    private final MySQLRepo mySQLRepo;
-    private final ReentrantLock lock = new ReentrantLock();
-
+public class InvokeAllImpl extends AbstractTask {
     @Autowired
-    public InvokeAllImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo) {
-        this.mongoDBRepo = mongoDBRepo;
-        this.mySQLRepo = mySQLRepo;
+    public InvokeAllImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
+        super(mongoDBRepo, mySQLRepo, fileReader);
     }
 
     @Override
     public Set<User> run() {
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS_NUMBER);
-        readFile();
-        List<Callable<Void>> tasks = List.of(this::processData, this::processData);
+        super.run();
+        List<Callable<Void>> tasks = List.of(this::process, this::process);
         try {
             executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
@@ -54,47 +36,8 @@ public class InvokeAllImpl implements TaskService {
         return getUsersFromMap();
     }
 
-    private void writeToMongoDB() {
-        mongoDBRepo.saveAll(getUsersFromMap());
-    }
-
-    private void writeToMySQL() {mySQLRepo.saveAll(getUsersFromMap());}
-
-    private Set<User> getUsersFromMap() {
-        return users.entrySet().stream().map(entry -> new User(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
-    }
-
-    private Void processData() {
-        String str;
-        String[] strings;
-        while (!queue.isEmpty()) {
-            str = queue.poll();
-            if (str != null) {
-                strings = str.split(",");
-                String name = strings[1];
-                Integer value = Integer.valueOf(strings[2]);
-                lock.lock();
-                try {
-                    users.put(name, users.containsKey(name) ? users.get(name) + value : value);
-                } finally {
-                    lock.unlock();
-                };
-            }
-        }
+    private Void process() {
+        this.processData();
         return null;
     }
-
-    private void readFile() {
-        ClassLoader classLoader = getClass().getClassLoader();
-        InputStream inputStream = classLoader.getResourceAsStream(FILE_NAME);
-        if (inputStream == null) {
-            throw new IllegalArgumentException("File not found");
-        }
-        try (Scanner scanner = new Scanner(inputStream)) {
-            while (scanner.hasNextLine()) {
-                queue.add(scanner.nextLine());
-            }
-        }
-    }
-
 }

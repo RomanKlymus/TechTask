@@ -14,16 +14,25 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractTask implements TaskService {
     public static final String FILE_NAME = "input.txt";
+    public static final int THREADS_NUMBER = 2;
     private final MongoDBRepo mongoDBRepo;
     private final MySQLRepo mySQLRepo;
     private final Map<String, Integer> users = new HashMap<>();
     private final ReentrantLock lock = new ReentrantLock();
-    private final Queue<String> queue;
+    private final FileReader fileReader;
+    private Queue<String> queue;
 
     public AbstractTask(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
         this.mongoDBRepo = mongoDBRepo;
         this.mySQLRepo = mySQLRepo;
+        this.fileReader = fileReader;
+    }
+
+    @Override
+    public Set<User> run() {
         queue = fileReader.readQueueFromFile(FILE_NAME);
+        users.clear();
+        return null;
     }
 
     public void writeToMongoDB() {
@@ -56,5 +65,4 @@ public abstract class AbstractTask implements TaskService {
             }
         }
     }
-
 }
