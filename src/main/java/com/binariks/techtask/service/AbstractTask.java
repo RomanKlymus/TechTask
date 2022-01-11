@@ -50,12 +50,18 @@ public abstract class AbstractTask implements TaskService {
     public void processData() {
         String str;
         String[] strings;
+        String name;
+        Integer value;
         while (!queue.isEmpty()) {
             str = queue.poll();
             if (str != null) {
                 strings = str.split(",");
-                String name = strings[1];
-                Integer value = Integer.valueOf(strings[2]);
+                try {
+                    name = strings[1];
+                    value = Integer.valueOf(strings[2]);
+                } catch (IndexOutOfBoundsException | NumberFormatException e) {
+                    continue;
+                }
                 lock.lock();
                 try {
                     users.put(name, users.containsKey(name) ? users.get(name) + value : value);

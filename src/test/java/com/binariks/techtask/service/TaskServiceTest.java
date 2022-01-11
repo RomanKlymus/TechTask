@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 public class TaskServiceTest {
     @ParameterizedTest
     @ArgumentsSource(ImplArgsProvider.class)
-    public void whenThereAreCorrectTransactionsShouldReturnSetOfUsers(TaskService taskService) {
+    public void whenThereAreTransactionsShouldReturnSetOfUsers(TaskService taskService) {
         final Set<User> users = Set.of(
                 new User("lev", 50),
                 new User("shani", 200),
@@ -36,6 +36,37 @@ public class TaskServiceTest {
                         "3,lior,-10",
                         "3,lev,-50",
                         "9,lior,40"));
+        when(ImplArgsProvider.fileReader.readQueueFromFile(AbstractTask.FILE_NAME))
+                .thenReturn(strings);
+
+        assertThat(taskService.run()).containsAll(users);
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ImplArgsProvider.class)
+    public void whenThereAreNoTransactionsShouldReturnEmptySet(TaskService taskService) {
+        Queue<String> strings = new ConcurrentLinkedQueue<>();
+        when(ImplArgsProvider.fileReader.readQueueFromFile(AbstractTask.FILE_NAME))
+                .thenReturn(strings);
+
+        assertThat(taskService.run()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(ImplArgsProvider.class)
+    public void whenThereAreWrongTransactionFormattingShouldProcessOnlyCorrectTransactions(TaskService taskService) {
+        final Set<User> users = Set.of(
+                new User("lev", 50),
+                new User("shani", 200)
+        );
+        Queue<String> strings = new ConcurrentLinkedQueue<>(
+                List.of(
+                        "1,lev,100",
+                        "2,shani,200",
+                        "3lior,-10",
+                        "3,lev,-50",
+                        "9,lior40",
+                        "10,lior,s2"));
         when(ImplArgsProvider.fileReader.readQueueFromFile(AbstractTask.FILE_NAME))
                 .thenReturn(strings);
 
