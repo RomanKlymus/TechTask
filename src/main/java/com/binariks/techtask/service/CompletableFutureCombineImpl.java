@@ -23,16 +23,17 @@ public class CompletableFutureCombineImpl extends AbstractTask {
         super.run();
         CompletableFuture<?> firstProcess = CompletableFuture.runAsync(this::processData);
         CompletableFuture<?> secondProcess = CompletableFuture.runAsync(this::processData);
-        firstProcess.thenCombineAsync(secondProcess, (o, o2) -> {
+        CompletableFuture<Object> mongoFuture = firstProcess.thenCombineAsync(secondProcess, (o, o2) -> {
             writeToMongoDB();
             return null;
         });
-        firstProcess.thenCombineAsync(secondProcess, (o, o2) -> {
+        CompletableFuture<Object> sqlFuture = firstProcess.thenCombineAsync(secondProcess, (o, o2) -> {
             writeToMySQL();
             return null;
         });
+        CompletableFuture<Void> writeFuture = CompletableFuture.allOf(sqlFuture, mongoFuture);
         try {
-            secondProcess.get();
+            writeFuture.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

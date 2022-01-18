@@ -12,11 +12,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
-public class CompletableFutureImpl extends AbstractTask {
+public class CompletableFutureJoinImpl extends AbstractTask {
     @Autowired
-    public CompletableFutureImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
+    public CompletableFutureJoinImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
         super(mongoDBRepo, mySQLRepo, fileReader);
     }
 
@@ -25,11 +26,19 @@ public class CompletableFutureImpl extends AbstractTask {
         super.run();
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS_NUMBER);
         List<Runnable> tasks = List.of(this::processData, this::processData);
-        CompletableFuture<?>[] futures = tasks.stream().map(task -> CompletableFuture.runAsync(task, executorService)).toArray(CompletableFuture[]::new);
+        CompletableFuture<?>[] futures = tasks.stream().map(CompletableFuture::runAsync).toArray(CompletableFuture[]::new);
         CompletableFuture.allOf(futures).join();
         executorService.execute(this::writeToMongoDB);
         executorService.execute(this::writeToMySQL);
         executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         return getUsersFromMap();
     }
 }

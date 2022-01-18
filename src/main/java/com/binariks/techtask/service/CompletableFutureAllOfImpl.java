@@ -23,10 +23,9 @@ public class CompletableFutureAllOfImpl extends AbstractTask {
         super.run();
         CompletableFuture<Void> future = CompletableFuture
                 .allOf(CompletableFuture.runAsync(this::processData), CompletableFuture.runAsync(this::processData));
-        future.thenRunAsync(this::writeToMongoDB);
-        future.thenRunAsync(this::writeToMySQL);
+        CompletableFuture<Void> writeFuture = CompletableFuture.allOf(future.thenRunAsync(this::writeToMongoDB), future.thenRunAsync(this::writeToMySQL));
         try {
-            future.get();
+            writeFuture.get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }

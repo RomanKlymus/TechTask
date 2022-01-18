@@ -43,6 +43,14 @@ public class ExecutorCompletionImpl extends AbstractTask {
         executorService.execute(this::writeToMongoDB);
         executorService.execute(this::writeToMySQL);
         executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         return getUsersFromMap();
     }
 

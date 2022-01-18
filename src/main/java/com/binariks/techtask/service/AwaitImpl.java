@@ -38,6 +38,14 @@ public class AwaitImpl extends AbstractTask {
         writers.execute(this::writeToMongoDB);
         writers.execute(this::writeToMySQL);
         writers.shutdown();
+        try {
+            if (!writers.awaitTermination(60, TimeUnit.SECONDS)) {
+                writers.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            writers.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         return super.getUsersFromMap();
     }
 }

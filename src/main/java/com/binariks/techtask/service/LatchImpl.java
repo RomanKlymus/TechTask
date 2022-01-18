@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class LatchImpl extends AbstractTask {
@@ -37,6 +38,14 @@ public class LatchImpl extends AbstractTask {
         writers.execute(this::writeToMongoDB);
         writers.execute(this::writeToMySQL);
         writers.shutdown();
+        try {
+            if (!writers.awaitTermination(60, TimeUnit.SECONDS)) {
+                writers.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            writers.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         return getUsersFromMap();
     }
 

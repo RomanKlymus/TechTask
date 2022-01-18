@@ -1,7 +1,6 @@
 package com.binariks.techtask.repository;
 
 import com.binariks.techtask.User;
-import com.binariks.techtask.service.CompletableFutureImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
@@ -9,7 +8,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Set;
 
 @Repository
 public class MySQLRepo {

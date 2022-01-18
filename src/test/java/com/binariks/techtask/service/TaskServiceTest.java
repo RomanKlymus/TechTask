@@ -72,6 +72,7 @@ public class TaskServiceTest {
 
         assertThat(taskService.run()).containsAll(users);
     }
+
 }
 
 class ImplArgsProvider implements ArgumentsProvider {
@@ -87,7 +88,7 @@ class ImplArgsProvider implements ArgumentsProvider {
                 IsTerminatedImpl.class,
                 InvokeAllImpl.class,
                 ExecutorCompletionImpl.class,
-                CompletableFutureImpl.class,
+                CompletableFutureJoinImpl.class,
                 CompletableFutureCombineImpl.class,
                 CompletableFutureAllOfImpl.class
         );

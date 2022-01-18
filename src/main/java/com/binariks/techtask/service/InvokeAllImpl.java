@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class InvokeAllImpl extends AbstractTask {
@@ -33,6 +34,14 @@ public class InvokeAllImpl extends AbstractTask {
         executorService.execute(this::writeToMongoDB);
         executorService.execute(this::writeToMySQL);
         executorService.shutdown();
+        try {
+            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
+                executorService.shutdownNow();
+            }
+        } catch (InterruptedException ex) {
+            executorService.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
         return getUsersFromMap();
     }
 

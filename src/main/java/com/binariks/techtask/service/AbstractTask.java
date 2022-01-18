@@ -5,10 +5,7 @@ import com.binariks.techtask.repository.MongoDBRepo;
 import com.binariks.techtask.repository.MySQLRepo;
 import com.binariks.techtask.util.FileReader;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -44,7 +41,19 @@ public abstract class AbstractTask implements TaskService {
     }
 
     public Set<User> getUsersFromMap() {
-        return users.entrySet().stream().map(entry -> new User(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
+        Set<User> users;
+        lock.lock();
+        try {
+            Set<User> set = new HashSet<>();
+            for (Map.Entry<String, Integer> entry : this.users.entrySet()) {
+                User user = new User(entry.getKey(), entry.getValue());
+                set.add(user);
+            }
+            users = set;
+        } finally {
+            lock.unlock();
+        }
+        return users;
     }
 
     public void processData() {
