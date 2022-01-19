@@ -12,7 +12,6 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class InvokeAllImpl extends AbstractTask {
@@ -26,27 +25,34 @@ public class InvokeAllImpl extends AbstractTask {
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS_NUMBER);
         super.run();
         List<Callable<Void>> tasks = List.of(this::process, this::process);
+        List<Callable<Void>> tasks2 = List.of(this::writeToMongo, this::writeToSQL);
         try {
             executorService.invokeAll(tasks);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        executorService.execute(this::writeToMongoDB);
-        executorService.execute(this::writeToMySQL);
-        executorService.shutdown();
         try {
-            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
+            executorService.invokeAll(tasks);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+        executorService.shutdown();
+
         return getUsersFromMap();
     }
 
     private Void process() {
-        this.processData();
+        processData();
+        return null;
+    }
+
+    private Void writeToMongo() {
+        writeToMongoDB();
+        return null;
+    }
+
+    private Void writeToSQL() {
+        writeToMySQL();
         return null;
     }
 }

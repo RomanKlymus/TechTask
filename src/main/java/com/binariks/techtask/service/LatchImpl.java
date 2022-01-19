@@ -15,7 +15,8 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class LatchImpl extends AbstractTask {
-    private final CountDownLatch latch = new CountDownLatch(THREADS_NUMBER);
+    private final CountDownLatch processLatch = new CountDownLatch(THREADS_NUMBER);
+    private final CountDownLatch writeLatch = new CountDownLatch(THREADS_NUMBER);
 
     @Autowired
     public LatchImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
@@ -30,27 +31,38 @@ public class LatchImpl extends AbstractTask {
         executorService.execute(this::processData);
         executorService.execute(this::processData);
         try {
-            latch.await();
+            processLatch.await();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         executorService.shutdown();
         writers.execute(this::writeToMongoDB);
         writers.execute(this::writeToMySQL);
-        writers.shutdown();
         try {
-            if (!writers.awaitTermination(60, TimeUnit.SECONDS)) {
-                writers.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            writers.shutdownNow();
-            Thread.currentThread().interrupt();
+            writeLatch.await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
+        writers.shutdown();
+
         return getUsersFromMap();
     }
 
+    @Override
     public void processData() {
         super.processData();
-        latch.countDown();
+        processLatch.countDown();
+    }
+
+    @Override
+    public void writeToMongoDB() {
+        super.writeToMongoDB();
+        writeLatch.countDown();
+    }
+
+    @Override
+    public void writeToMySQL() {
+        super.writeToMySQL();
+        writeLatch.countDown();
     }
 }

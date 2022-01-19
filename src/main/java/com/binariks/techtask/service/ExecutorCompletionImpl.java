@@ -32,30 +32,23 @@ public class ExecutorCompletionImpl extends AbstractTask {
         super.run();
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS_NUMBER);
         CompletionService<Void> completionService = new ExecutorCompletionService<>(executorService);
-        completionService.submit(this::process);
-        completionService.submit(this::process);
+        completionService.submit(this::processData, null);
+        completionService.submit(this::processData, null);
         try {
             completionService.take();
             completionService.take();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        executorService.execute(this::writeToMongoDB);
-        executorService.execute(this::writeToMySQL);
-        executorService.shutdown();
+        completionService.submit(this::writeToMongoDB, null);
+        completionService.submit(this::writeToMongoDB, null);
         try {
-            if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
-                executorService.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            executorService.shutdownNow();
-            Thread.currentThread().interrupt();
+            completionService.take();
+            completionService.take();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
         return getUsersFromMap();
     }
 
-    private Void process() {
-        this.processData();
-        return null;
-    }
 }

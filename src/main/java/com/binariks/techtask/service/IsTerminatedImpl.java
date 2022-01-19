@@ -33,13 +33,8 @@ public class IsTerminatedImpl extends AbstractTask {
         writers.execute(this::writeToMongoDB);
         writers.execute(this::writeToMySQL);
         writers.shutdown();
-        try {
-            if (!writers.awaitTermination(60, TimeUnit.SECONDS)) {
-                writers.shutdownNow();
-            }
-        } catch (InterruptedException ex) {
-            writers.shutdownNow();
-            Thread.currentThread().interrupt();
+        while (!writers.isTerminated()) {
+            System.out.print("");
         }
         return getUsersFromMap();
     }
