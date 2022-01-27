@@ -8,10 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 @Service
 public class ExecutorCompletionImpl extends AbstractTask {
@@ -35,7 +32,7 @@ public class ExecutorCompletionImpl extends AbstractTask {
             throw new RuntimeException(e);
         }
         completionService.submit(this::writeToMongoDB, null);
-        completionService.submit(this::writeToMongoDB, null);
+        completionService.submit(this::writeToMySQL, null);
         try {
             completionService.take();
             completionService.take();

@@ -1,4 +1,4 @@
-package com.binariks.techtask;
+package com.binariks.techtask.config;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
