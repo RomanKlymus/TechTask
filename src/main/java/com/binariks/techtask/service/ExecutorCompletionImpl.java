@@ -7,20 +7,11 @@ import com.binariks.techtask.util.FileReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class ExecutorCompletionImpl extends AbstractTask {
-    private static final String FILE_NAME = "input.txt";
-    private static final int THREADS_NUMBER = 2;
-    private final Queue<String> queue = new ConcurrentLinkedQueue<>();
-    private final Map<String, Integer> users = new HashMap<>();
-    private final ReentrantLock lock = new ReentrantLock();
 
     @Autowired
     public ExecutorCompletionImpl(MongoDBRepo mongoDBRepo, MySQLRepo mySQLRepo, FileReader fileReader) {
@@ -41,7 +32,7 @@ public class ExecutorCompletionImpl extends AbstractTask {
             throw new RuntimeException(e);
         }
         completionService.submit(this::writeToMongoDB, null);
-        completionService.submit(this::writeToMongoDB, null);
+        completionService.submit(this::writeToMySQL, null);
         try {
             completionService.take();
             completionService.take();

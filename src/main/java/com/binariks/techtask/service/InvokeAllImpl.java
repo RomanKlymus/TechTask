@@ -32,7 +32,7 @@ public class InvokeAllImpl extends AbstractTask {
             throw new RuntimeException(e);
         }
         try {
-            executorService.invokeAll(tasks);
+            executorService.invokeAll(tasks2);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
